@@ -80,6 +80,7 @@ class Lottery():
             if not isinstance(self.scaling, str):
                 raise TypeError("The scaling must be a string'")
         if self.deterministic is None:
+            print('Me cuenta NOne?')
             self.deterministic = False
         if self.waiting is None:
             self.waiting = False
@@ -292,6 +293,7 @@ class Lottery():
             print('SI QUE VA')
             self.selected_target = self.total_scores_targets_df.index[0]
         else:
+            print('No va')
             #   Normalise serie to range 1
             self.total_scores_targets_df = self.normalize_scores_serie(self.total_scores_targets_df)
             #   Pick target. Sample participant with probability proportional to score
