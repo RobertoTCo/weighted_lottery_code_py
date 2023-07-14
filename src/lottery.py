@@ -4,7 +4,7 @@ import pandas as pd
 
 class Lottery():
 
-    __acceptable_keys_list = ['participants_df', 'targets_df', 'weights', 'method', 'verbose', 'strict', 'scaling', 'compromise','sleep_time']
+    __acceptable_keys_list = ['participants_df', 'targets_df', 'weights', 'method', 'verbose', 'strict', 'scaling', 'compromise','sleep_time','waiting']
 
     def __init__(self, **kwargs): #args receives unlimited no. of arguments as an array
 
@@ -20,6 +20,7 @@ class Lottery():
         self.compromise = None # No compromise by default
         self.sleep_time = None # No waiting time per iteration by default
         self.deterministic = None # Not deterministic by default
+        self.waiting = False # Not asking for an input to do next interation
 
         # Expected input attributes
         [self.__setattr__(key, kwargs.get(key)) for key in self.__acceptable_keys_list]
@@ -37,8 +38,8 @@ class Lottery():
             raise ValueError("Set method argument, it must be 'harmonic' or 'linear'")
         if self.scaling is None:
             print("WARNING: Scaling is not set. The features will be aggregated without scaling. You can use 'minmax' or 'max'")
-        print(self.verbose)
-        print(self.strict)
+        #print(self.verbose)
+        #print(self.strict)
         # Check types
         self.check_types()
         
@@ -80,6 +81,8 @@ class Lottery():
                 raise TypeError("The scaling must be a string'")
         if self.deterministic is None:
             self.deterministic = False
+        if self.waiting is None:
+            self.waiting = False
         if self.compromise is not None:
             if not isinstance(self.compromise, dict):
                 raise TypeError("The compromise attribute must be a dictionary with the following keys: 'compromise_vars', 'major_targets', 'minor_targets'")
@@ -244,7 +247,7 @@ class Lottery():
             self.temp_compromise_vars = self.temp_compromise_vars.sum(axis=0)
         # compute zscores: values below the mean are negative, above the mean are positive
             # check sd != 0
-        print(self.temp_compromise_vars)
+        #print(self.temp_compromise_vars)
         if np.std(self.temp_compromise_vars) == 0:
             self.temp_compromise_vars[:] = 0 # if all unique, preference not apply, sigmoid of 0 = 0.5
         else:
@@ -265,22 +268,22 @@ class Lottery():
             # Get target columns not assigned as major or minor
             # self.compromise['other_targets'] = [x for x in self.scores_targets_df.columns if x not in self.compromise['major_targets'] + self.compromise['minor_targets']]
             # Apply compromise weights for major and minor targets
-            print('DBG!!!!!!!!!!!!!!!!!!!!!!! check empty list major targets', not self.compromise['major_targets'])
+            print('\nDBG!!!!!!!!!!!!!!!!!!!!!!! check empty list major targets?:', not self.compromise['major_targets'])
             if not self.compromise['major_targets']:
                 pass
             else:
-                print('DBG!!!!!!!!!!!!!!!!!!!!!!!major targets \n',self.scores_targets_df[self.compromise['major_targets']] )
+                print('\n Major targets not chosen yet: \n',self.scores_targets_df[self.compromise['major_targets']] )
                 print('DBG!!!!!!!!!!!!!!!!!!!!!!! temp_compromise_vars \n', self.temp_compromise_vars.to_numpy() )
                 self.scores_targets_df[self.compromise['major_targets']] =  np.apply_along_axis(lambda x: x * self.temp_compromise_vars.to_numpy(), 0, self.scores_targets_df[self.compromise['major_targets']].to_numpy())
             if not self.compromise['minor_targets']:
                 pass
             else:
-                print('DBG!!!!!!!!!!!!!!!!!!!!!!!minor targets \n',self.scores_targets_df[self.compromise['minor_targets']] )
+                print('\n Minor targets not chosen yet: \n',self.scores_targets_df[self.compromise['minor_targets']] )
                 print('DBG!!!!!!!!!!!!!!!!!!!!!!! temp_compromise_vars \n', self.temp_compromise_vars.to_numpy() )
                 #self.scores_targets_df[self.compromise['minor_targets']] =  self.scores_targets_df[self.compromise['minor_targets']].to_numpy() * (2 - self.temp_compromise_vars.to_numpy() )
                 self.scores_targets_df[self.compromise['minor_targets']] = np.apply_along_axis(lambda x: x * (2 - self.temp_compromise_vars.to_numpy()), 0, self.scores_targets_df[self.compromise['minor_targets']].to_numpy())
             # self.scores_targets_df[self.compromise['other_targets']] =  self.scores_targets_df[self.compromise['other_targets']] * 1
-            print(f'DBG!!! After compromise \n{self.scores_targets_df}')
+            print(f'\n After compromise \n{self.scores_targets_df}')
         #   Compute total scores for each target
         self.total_scores_targets_df = self.scores_targets_df.sum(axis=1).sort_values(ascending=False)
         self.total_scores_targets_df = self.total_scores_targets_df.set_axis(self.scores_targets_df.columns, axis='index')
@@ -295,9 +298,9 @@ class Lottery():
         #   Add value to list of selected targets
         self.selected_targets.append(self.selected_target)
         if self.verbose:
-            print('Selection of target....')
-            print(f"Total score for targets:\n {self.total_scores_targets_df}\n")
-            print(f"Selected target: {self.selected_target}\n")
+            print('\nSelection of target....')
+            print(f"\nTotal score for targets:\n {self.total_scores_targets_df}\n")
+            print(f"\nSelected target: {self.selected_target}\n")
         
     def update_participants_scores(self):
         # Multiply selected_target preference based on participants metrics, normalise to range 1
@@ -310,7 +313,7 @@ class Lottery():
         # if self.scaling is not None:
         #     self.scores_participants_df = self.participants_df.apply(self.compute_scaling, axis=0)
         
-        print('DBG!!!!', self.scores_participants_df)
+        print('\nDBG!!!!', self.scores_participants_df)
 
         # If some columns were used to weight the preferences of targets, don't use them to compute value of participants
         # These columns  are already applyed in update_targets_scores()
@@ -323,7 +326,7 @@ class Lottery():
         #       If compromise method is applied, the preferences for the selected target are weighted based on 
         #       the compromise weights, computed in update_targets_scores()
         self.total_scores_participants_df = self.total_scores_participants_df.to_frame().join(self.scores_targets_df[self.selected_target] )
-        print('DBG!!!! total + pais\n', self.total_scores_participants_df)
+        print('\nDBG!!!! total + pais\n', self.total_scores_participants_df)
         self.total_scores_participants_df = self.total_scores_participants_df.prod(axis=1)
         #   Normalise serie to range 1
         self.total_scores_participants_df = self.normalize_scores_serie(self.total_scores_participants_df)
@@ -335,11 +338,11 @@ class Lottery():
         if self.verbose:
             print('Selection of participant....\n')
             if self.scaling is not None:
-                print(f"Scores of participants after scaling and applying weights:\n {self.scores_participants_df}")
+                print(f"\nScores of participants after scaling and applying weights:\n {self.scores_participants_df}")
             else:
-                print(f"Scores of participants after applying weights:\n {self.scores_participants_df}\n")
-            print(f"Probabilities of participants in the iteration:\n {self.total_scores_participants_df}\n")
-            print(f"Selected participant: {self.selected_participant} \n")
+                print(f"\nScores of participants after applying weights:\n {self.scores_participants_df}\n")
+            print(f"\nProbabilities of participants in the iteration:\n {self.total_scores_participants_df}\n")
+            print(f"\nSelected participant: {self.selected_participant} \n")
 
     def drop_selections(self):
         # Drop selections from participants_df and targets_df
@@ -357,11 +360,11 @@ class Lottery():
         # Once a column and a row has been dropped, the values of the remaining columns and rows are not in the range 1 to the number of targets.
         # Find missing values for every row
         missing_values = self.check_missings()
-        print(f'DBG!!!!!!!!!!!!!! Missing values: {missing_values}')
+        print(f'\nDBG!!!!!!!!!!!!!! Missing values: {missing_values}')
         # Reduce values greater than the missing value by 1 per row
         # This only works if the self.processing ensures every row is unique values range(1, n_cols + 1)
         self.targets_df[self.targets_df > missing_values] -= 1
-        print(f'New targets preferences:\n {self.targets_df}\n')
+        print(f'\nNew targets preferences:\n {self.targets_df}\n')
        
     def iteration(self):
         if self.verbose:
@@ -395,6 +398,10 @@ class Lottery():
             # Call sleep time to wait for the next iteration
             sleep(self.sleep_time)
 
+        # Ask for input to continue
+        if self.waiting:
+            user_input = input("Press Enter to continue to the next iteration...")
+
     def run(self):  # Main executable function
         if self.verbose:
             print('Starting lottery algorithm!')
@@ -423,8 +430,10 @@ class Lottery():
         self.selected_targets = []
         self.selected_participants = []
 
-        print('DBG!!!!!!!!!!!!!!!!!!!\n')
+        print('This is your loaded tables:\n')
+        print('\t Targets table:\n')
         print(self.targets_df)
+        print('\t Participants table:\n')
         print(self.participants_df)
         # # Begin iterations!
         self.iteration_number = 0
@@ -432,8 +441,7 @@ class Lottery():
         while not self.stop:
             self.iteration_number += 1
             
-            print('DBG',self.targets_df.shape[1])
-            print('DBG',self.targets_df.shape[0])
+            print('Targets shape:',self.targets_df.shape)
 
             self.iteration()
         
