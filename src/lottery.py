@@ -289,6 +289,7 @@ class Lottery():
         self.total_scores_targets_df = self.total_scores_targets_df.set_axis(self.scores_targets_df.columns, axis='index')
         #   Pick target
         if self.deterministic:
+            print('SI QUE VA')
             self.selected_target = self.total_scores_targets_df.index[0]
         else:
             #   Normalise serie to range 1
