@@ -306,7 +306,6 @@ class Lottery():
             print(f'\n After compromise \n{self.scores_targets_df}')
         #   Compute total scores for each target
         self.total_scores_targets_df = self.scores_targets_df.sum(axis=0).sort_values(ascending=False)
-        self.total_scores_targets_df = self.total_scores_targets_df.set_axis(self.scores_targets_df.columns, axis='index')
         #   Pick target
         if self.deterministic:
             print('\nSI QUE VA')
