@@ -190,7 +190,7 @@ class Lottery():
         # !Check that there are not repeated numeric values in target table for each row
         if any(self.targets_df.nunique(axis=1) < self.targets_df.shape[1]):    # if number of unique values per row is not equal to cols
             # Check which indexes of the pd.DataFrame.nunique() series are less than the number of cols
-             raise ValueError(f"The rows {self.targets_df.index[~self.targets_df.nunique(axis=1) < self.targets_df.shape[1]].tolist()} have repeated values")
+             raise ValueError(f"The rows {self.targets_df.index[self.targets_df.nunique(axis=1) < self.targets_df.shape[1]].tolist()} have repeated values")
 
         # check compatibilities
         self.check_compatibilties()
