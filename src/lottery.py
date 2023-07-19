@@ -4,7 +4,7 @@ import pandas as pd
 
 class Lottery():
 
-    __acceptable_keys_list = ['participants_df', 'targets_df', 'weights', 'method', 'verbose', 'strict', 'scaling', 'compromise','deterministic','sleep_time','waiting']
+    __acceptable_keys_list = ['participants_df', 'targets_df', 'weights', 'method', 'verbose', 'strict', 'scaling', 'compromise','difficulty','deterministic','sleep_time','waiting']
 
     def __init__(self, **kwargs): #args receives unlimited no. of arguments as an array
 
@@ -18,6 +18,7 @@ class Lottery():
         self.result_df = None
         self.strict = None # Not strict by default
         self.compromise = None # No compromise by default
+        self.difficulty = None
         self.sleep_time = None # No waiting time per iteration by default
         self.deterministic = None # Not deterministic by default
         self.waiting = False # Not asking for an input to do next interation
@@ -118,7 +119,27 @@ class Lottery():
                                 raise ValueError("Some elements of the list 'compromise_vars' in '.compromise' dictionary are not present in the dataframe for participants")
                         else:
                             if not all(x in self.targets_df.columns for x in self.compromise[var]):
-                                raise ValueError(f"Some elements of the list {var} are not present in the dataframe for targets")
+                                raise ValueError(f"Some elements of the list {var} in the difficulty compromise are not present in the dataframe for targets")
+              
+        if self.difficulty is not None:
+            if not isinstance(self.difficulty, dict):
+                raise TypeError("The difficulty attribute must be a dictionary with the following keys: 'difficulty_vars', 'major_targets', 'minor_targets'")
+            else:
+                for var in ['difficulty_vars', 'major_targets', 'minor_targets']:
+                    if not (var in self.compromise.keys()):
+                        raise ValueError(f" key {var} not in dictionary {self.difficulty}. It is required")
+
+                    if not isinstance(self.difficulty[var], (list,str)):
+                        raise TypeError("The dictionary keys must only have assigned a string or a list of strings as values")
+                    if isinstance(self.difficulty[var], list):
+                        if not all(isinstance(x, str) for x in self.difficulty[var]):
+                            raise TypeError(f"Each element of the list {var} in '.difficulty' dictionary must be a string")
+                        if var == 'difficulty_vars':
+                            if not all(x in self.participants_df.columns for x in self.difficulty[var]):
+                                raise ValueError("Some elements of the list 'compromise_vars' in '.difficulty' dictionary are not present in the dataframe for participants")
+                        else:
+                            if not all(x in self.targets_df.columns for x in self.difficulty[var]):
+                                raise ValueError(f"Some elements of the list {var} in the difficulty dictionary are not present in the dataframe for targets")
                 
     def check_compatibilties(self):
         # ! Check that the number of rows in participants_df (participants) is equal to the number of columns in the target_df.
@@ -194,6 +215,13 @@ class Lottery():
 
         # check compatibilities
         self.check_compatibilties()
+
+        # set the compromise and difficulty dicts with empty values
+        # The dicts need to be declared in the case only 1 of tthe 2 dicts are specified
+        if self.compromise is None:
+            self.compromise = {'compromise_vars': None,'major_targets': [], 'minor_targets': []}
+        if self.difficulty is None:
+            self.difficulty = {'difficulty_vars': None,'major_targets': [], 'minor_targets': []}
         
     @staticmethod
     def normalize_scores(dataframe: pd.DataFrame, axis: int):
@@ -278,40 +306,78 @@ class Lottery():
         self.temp_compromise_vars = self.sigmoid(self.temp_compromise_vars)
         self.temp_compromise_vars = self.temp_compromise_vars * 2 # make mean -> 1, max -> 2
 
+    def process_difficulty(self):
+        # If difficulty method applied, compute the linear combination of the weights
+        # This method must be called after the participants vars are scaled and multiplied by weights
+        self.temp_difficulty_vars = self.participants_df[self.difficulty['difficulty_vars']].copy()
+        if isinstance(self.difficulty['difficulty_vars'],list) and len(self.difficulty['difficulty_vars']) > 1:
+            self.temp_difficulty_vars = self.temp_difficulty_vars.sum(axis=0)
+        # compute zscores: values below the mean are negative, above the mean are positive
+            # check sd != 0
+        #print(self.temp_difficulty_vars)
+        if np.std(self.temp_difficulty_vars) == 0:
+            self.temp_difficulty_vars[:] = 0 # if all unique, preference not apply, sigmoid of 0 = 0.5
+        else:
+            self.temp_difficulty_vars = self.zscores_series(self.temp_difficulty_vars)
+            self.temp_difficulty_vars = self.temp_difficulty_vars* 4 # make greater the std diff
+        # compute sigmoide: negative values are less significance, positive values are more significance
+        self.temp_difficulty_vars = self.sigmoid(self.temp_difficulty_vars)
+        self.temp_difficulty_vars = self.temp_difficulty_vars * 2 # make mean -> 1, max -> 2
+
         
     def update_targets_scores(self):
         # Sort targets by score, select the highest score
         self.scores_targets_df = self.compute_scores(self.targets_df, axis=1)
         # If compromise selected, apply weights based on categories of targets
+        print(f'DBG!!! Before compromise/difficulty:\n {self.scores_targets_df}')
+        
         if self.compromise is not None:
-            print(f'DBG!!! Before compromise:\n {self.scores_targets_df}')
+            # Start calculating compromise!
             self.process_compromise()
             # Get target columns not assigned as major or minor
             # self.compromise['other_targets'] = [x for x in self.scores_targets_df.columns if x not in self.compromise['major_targets'] + self.compromise['minor_targets']]
             # Apply compromise weights for major and minor targets
-            print('\nDBG!!!!!!!!!!!!!!!!!!!!!!! check empty list major targets?:', not self.compromise['major_targets'])
             if not self.compromise['major_targets']:
                 pass
             else:
-                print('\n Major targets not chosen yet: \n',self.scores_targets_df[self.compromise['major_targets']] )
+                print('\n Major compromise targets not chosen yet: \n',self.scores_targets_df[self.compromise['major_targets']] )
                 self.scores_targets_df[self.compromise['major_targets']] =  np.apply_along_axis(lambda x: x * self.temp_compromise_vars.to_numpy(), 0, self.scores_targets_df[self.compromise['major_targets']].to_numpy())
             if not self.compromise['minor_targets']:
                 pass
             else:
-                print('\n Minor targets not chosen yet: \n',self.scores_targets_df[self.compromise['minor_targets']] )
+                print('\n Minor compromise targets not chosen yet: \n',self.scores_targets_df[self.compromise['minor_targets']] )
                 print('DBG!!!!!!!!!!!!!!!!!!!!!!! temp_compromise_vars \n', self.temp_compromise_vars.to_numpy() )
                 #self.scores_targets_df[self.compromise['minor_targets']] =  self.scores_targets_df[self.compromise['minor_targets']].to_numpy() * (2 - self.temp_compromise_vars.to_numpy() )
                 self.scores_targets_df[self.compromise['minor_targets']] = np.apply_along_axis(lambda x: x * (2 - self.temp_compromise_vars.to_numpy()), 0, self.scores_targets_df[self.compromise['minor_targets']].to_numpy())
-            # self.scores_targets_df[self.compromise['other_targets']] =  self.scores_targets_df[self.compromise['other_targets']] * 1
-            print(f'\n After compromise \n{self.scores_targets_df}')
+        
+        if self.difficulty is not None:
+            # Start calculating difficulty!
+            self.process_difficulty()
+            if not self.difficulty['major_targets']:
+                pass
+            else:
+                print('\n Major difficulty targets not chosen yet: \n',self.scores_targets_df[self.difficulty['major_targets']] )
+                self.scores_targets_df[self.difficulty['major_targets']] =  np.apply_along_axis(lambda x: x * self.temp_difficulty_vars.to_numpy(), 0, self.scores_targets_df[self.difficulty['major_targets']].to_numpy())
+            if not self.difficulty['minor_targets']:
+                pass
+            else:
+                print('\n Minor difficulty targets not chosen yet: \n',self.scores_targets_df[self.difficulty['minor_targets']] )
+                print('DBG!!!!!!!!!!!!!!!!!!!!!!! temp_compromise_vars \n', self.temp_compromise_vars.to_numpy() )
+                #self.scores_targets_df[self.difficulty['minor_targets']] =  self.scores_targets_df[self.difficulty['minor_targets']].to_numpy() * (2 - self.temp_difficulty_vars.to_numpy() )
+                self.scores_targets_df[self.difficulty['minor_targets']] = np.apply_along_axis(lambda x: x * (2 - self.temp_difficulty_vars.to_numpy()), 0, self.scores_targets_df[self.difficulty['minor_targets']].to_numpy())
+            
+            print(f'\n After compromise/difficulty \n{self.scores_targets_df}')
+        else:
+            print('Not compromise or difficulty variables applied')
+            print('Punctuation for targets:\n {self.scores_targets_df}')
         #   Compute total scores for each target
         self.total_scores_targets_df = self.scores_targets_df.sum(axis=0).sort_values(ascending=False)
         #   Pick target
         if self.deterministic:
-            print('\nSI QUE VA')
+            print('\nDeterministic method')
             self.selected_target = self.total_scores_targets_df.index[0]
         else:
-            print('\nNo va')
+            print('\nProbability method')
             #   Normalise serie to range 1
             self.total_scores_targets_df = self.normalize_scores_serie(self.total_scores_targets_df)
             #   Pick target. Sample participant with probability proportional to score
@@ -409,8 +475,6 @@ class Lottery():
 
         # 5. - Drop selections from participants_df and targets_df
         self.drop_selections()
-        print('DBG!!!!!!!!!!!!!!!!!!!!! hay filas?',self.targets_df.shape[0] == 0)
-        print('DBG!!!!!!!!!!!!!!!!!!!!! hay columnas?',self.targets_df.shape[1] == 0)
         if self.targets_df.shape[1] == 0 or self.targets_df.shape[0] == 0:
             self.stop = True
         else:
