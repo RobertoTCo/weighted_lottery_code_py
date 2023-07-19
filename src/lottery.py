@@ -96,7 +96,7 @@ class Lottery():
             print('Me cuenta NOne?')
             self.deterministic = False
         else:
-            not isinstance(self.deterministic, bool):
+            if not isinstance(self.deterministic, bool):
                 raise TypeError("The deterministic input must be a boolean True or False")
         if self.waiting is None:
             self.waiting = False
