@@ -78,10 +78,13 @@ class Lottery():
                 raise TypeError('The strict must be a boolean: True or False')
         if self.scaling is not None:
             if not isinstance(self.scaling, str):
-                raise TypeError("The scaling must be a string'")
+                raise TypeError("The scaling must be a string")
         if self.deterministic is None:
             print('Me cuenta NOne?')
             self.deterministic = False
+        else:
+            not isinstance(self.deterministic, bool):
+                raise TypeError("The deterministic input must be a boolean True or False")
         if self.waiting is None:
             self.waiting = False
         if self.compromise is not None:
@@ -289,10 +292,10 @@ class Lottery():
         self.total_scores_targets_df = self.total_scores_targets_df.set_axis(self.scores_targets_df.columns, axis='index')
         #   Pick target
         if self.deterministic:
-            print('SI QUE VA')
+            print('\nSI QUE VA')
             self.selected_target = self.total_scores_targets_df.index[0]
         else:
-            print('No va')
+            print('\nNo va')
             #   Normalise serie to range 1
             self.total_scores_targets_df = self.normalize_scores_serie(self.total_scores_targets_df)
             #   Pick target. Sample participant with probability proportional to score
