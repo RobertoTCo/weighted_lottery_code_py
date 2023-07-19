@@ -171,7 +171,7 @@ class Lottery():
             if not (typ in my_type):
                 raise ValueError(f" `participants_df['{col_name}'].dtype == {typ}` not {my_type}")
         
-        # target_df
+        # targets_df
             # ! Check that the rest of the columns are of type int or float
         my_type = ['int64', 'float64']
         dtypes = self.targets_df.dtypes.to_dict()
@@ -187,6 +187,10 @@ class Lottery():
         # ! Check that max(target value) = number of targets.
         if self.targets_df.max().max() != self.targets_df.shape[1]:
             raise ValueError('The max value of each target must be equal to the number of targets')
+        # !Check that there are not repeated numeric values in target table for each row
+        if any(targets_df.nunique(axis=1) < targets_df.shape[1]    # if number of unique values per row is not equal to cols
+            # Check which indexes of the pd.DataFrame.nunique() series are less than the number of cols
+             raise ValueError(f"The rows {targets_df.index[~targets_df.nunique(axis=1) < targets_df.shape[1]].tolist()} have repeated values")
 
         # check compatibilities
         self.check_compatibilties()
