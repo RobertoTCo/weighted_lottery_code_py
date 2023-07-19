@@ -4,7 +4,7 @@ import pandas as pd
 
 class Lottery():
 
-    __acceptable_keys_list = ['participants_df', 'targets_df', 'weights', 'method', 'verbose', 'strict', 'scaling', 'compromise','sleep_time','waiting']
+    __acceptable_keys_list = ['participants_df', 'targets_df', 'weights', 'method', 'verbose', 'strict', 'scaling', 'compromise','deterministic','sleep_time','waiting']
 
     def __init__(self, **kwargs): #args receives unlimited no. of arguments as an array
 
@@ -274,7 +274,6 @@ class Lottery():
                 pass
             else:
                 print('\n Major targets not chosen yet: \n',self.scores_targets_df[self.compromise['major_targets']] )
-                print('DBG!!!!!!!!!!!!!!!!!!!!!!! temp_compromise_vars \n', self.temp_compromise_vars.to_numpy() )
                 self.scores_targets_df[self.compromise['major_targets']] =  np.apply_along_axis(lambda x: x * self.temp_compromise_vars.to_numpy(), 0, self.scores_targets_df[self.compromise['major_targets']].to_numpy())
             if not self.compromise['minor_targets']:
                 pass
