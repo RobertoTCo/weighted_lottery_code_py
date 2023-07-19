@@ -52,7 +52,20 @@ class Lottery():
     
     def __call__(self):
         return '<Lottery demo object __call__>'
-    
+
+    # -- Debugging function to check attributes that are not initialised --
+    def print_none_attributes(self):
+        none_attributes = []
+        for attr_name, attr_value in self.__dict__.items():
+            if attr_value is None:
+                none_attributes.append(attr_name)
+        if none_attributes:
+            print("Attributes with value None:")
+            for attr_name in none_attributes:
+                print(f"{attr_name}: None")
+        else:
+            print("No attributes with value None.")
+            
     # Function to check if attributes are expected types
     def check_types(self):
         if not isinstance(self.participants_df, pd.DataFrame):
