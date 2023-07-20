@@ -400,17 +400,19 @@ class Lottery():
         # if self.scaling is not None:
         #     self.scores_participants_df = self.participants_df.apply(self.compute_scaling, axis=0)
         
-        print('\nDBG!!!!', self.scores_participants_df)
-
         # If some columns were used to weight the preferences of targets, don't use them to compute value of participants
         # These columns  are already applyed in update_targets_scores()
         if self.compromise is not None:
             # get columns not in self.compromise['compromise_vars']
             self.scores_participants_df = self.scores_participants_df.drop(self.compromise['compromise_vars'], axis=1)
+        if self.difficulty is not None:
+            # get columns not in self.difficulty['difficulty_vars']
+            self.scores_participants_df = self.scores_participants_df.drop(self.difficulty['difficulty_vars'], axis=1)
         #   aggregate element-wise sum for columns
+        print('\nDBG!!!!', self.scores_participants_df)
         self.total_scores_participants_df = self.scores_participants_df.sum(axis=1)
         #   Add preferences of selected target
-        #       If compromise method is applied, the preferences for the selected target are weighted based on 
+        #       If compromise or difficulty method is applied, the preferences for the selected target are weighted based on 
         #       the compromise weights, computed in update_targets_scores()
         self.total_scores_participants_df = self.total_scores_participants_df.to_frame().join(self.scores_targets_df[self.selected_target] )
         print('\nDBG!!!! total + pais\n', self.total_scores_participants_df)
