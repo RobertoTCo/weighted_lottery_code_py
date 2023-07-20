@@ -346,9 +346,10 @@ class Lottery():
                 pass
             else:
                 print('\n Minor compromise targets not chosen yet: \n',self.scores_targets_df[self.compromise['minor_targets']] )
-                print('DBG!!!!!!!!!!!!!!!!!!!!!!! temp_compromise_vars \n', self.temp_compromise_vars.to_numpy() )
                 #self.scores_targets_df[self.compromise['minor_targets']] =  self.scores_targets_df[self.compromise['minor_targets']].to_numpy() * (2 - self.temp_compromise_vars.to_numpy() )
                 self.scores_targets_df[self.compromise['minor_targets']] = np.apply_along_axis(lambda x: x * (2 - self.temp_compromise_vars.to_numpy()), 0, self.scores_targets_df[self.compromise['minor_targets']].to_numpy())
+            print('DBG!!!!!!!!!!!!!!!!!!!!!!! temp_compromise_vars \n', self.temp_compromise_vars.to_numpy() )
+            print(f'\n After compromise \n{self.scores_targets_df}')
         
         if self.difficulty is not None:
             # Start calculating difficulty!
@@ -362,11 +363,10 @@ class Lottery():
                 pass
             else:
                 print('\n Minor difficulty targets not chosen yet: \n',self.scores_targets_df[self.difficulty['minor_targets']] )
-                print('DBG!!!!!!!!!!!!!!!!!!!!!!! temp_compromise_vars \n', self.temp_compromise_vars.to_numpy() )
                 #self.scores_targets_df[self.difficulty['minor_targets']] =  self.scores_targets_df[self.difficulty['minor_targets']].to_numpy() * (2 - self.temp_difficulty_vars.to_numpy() )
                 self.scores_targets_df[self.difficulty['minor_targets']] = np.apply_along_axis(lambda x: x * (2 - self.temp_difficulty_vars.to_numpy()), 0, self.scores_targets_df[self.difficulty['minor_targets']].to_numpy())
-            
-            print(f'\n After compromise/difficulty \n{self.scores_targets_df}')
+            print('DBG!!!!!!!!!!!!!!!!!!!!!!! temp_difficulty_vars \n', self.temp_difficulty_vars.to_numpy() )
+            print(f'\n After difficulty \n{self.scores_targets_df}')
         else:
             print('Not compromise or difficulty variables applied')
             print('Punctuation for targets:\n {self.scores_targets_df}')
