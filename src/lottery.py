@@ -442,6 +442,12 @@ class Lottery():
                 self.compromise['major_targets'].remove(self.selected_target)
             elif self.selected_target in self.compromise['minor_targets']:
                 self.compromise['minor_targets'].remove(self.selected_target)
+        # eliminate selected target from difficulty['major_targets'] or difficulty['minor_targets']
+        if self.difficulty is not None:
+            if self.selected_target in self.difficulty['major_targets']:
+                self.difficulty['major_targets'].remove(self.selected_target)
+            elif self.selected_target in self.difficulty['minor_targets']:
+                self.difficulty['minor_targets'].remove(self.selected_target)
 
     def shift_preferences(self):
         # Once a column and a row has been dropped, the values of the remaining columns and rows are not in the range 1 to the number of targets.
