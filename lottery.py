@@ -418,7 +418,7 @@ class Lottery():
         print('\nDBG!!!! total + pais\n', self.total_scores_participants_df)
         self.total_scores_participants_df = self.total_scores_participants_df.prod(axis=1)
         #   Normalise serie to range 1
-        self.total_scores_participants_df = self.normalize_scores_serie(self.total_scores_participants_df)
+        self.total_scores_participants_df = self.normalize_scores_serie(self.total_scores_participants_df).sort_values(ascending=False)
         #   Pick target. Sample participant with probability proportional to score
         self.selected_participant = np.random.choice(self.total_scores_participants_df.index, size=1, p=self.total_scores_participants_df.values)
         #   Add value to list of selected participants
