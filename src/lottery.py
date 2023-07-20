@@ -126,7 +126,7 @@ class Lottery():
                 raise TypeError("The difficulty attribute must be a dictionary with the following keys: 'difficulty_vars', 'major_targets', 'minor_targets'")
             else:
                 for var in ['difficulty_vars', 'major_targets', 'minor_targets']:
-                    if not (var in self.compromise.keys()):
+                    if not (var in self.difficulty.keys()):
                         raise ValueError(f" key {var} not in dictionary {self.difficulty}. It is required")
 
                     if not isinstance(self.difficulty[var], (list,str)):
