@@ -409,7 +409,7 @@ class Lottery():
             # get columns not in self.difficulty['difficulty_vars']
             self.scores_participants_df = self.scores_participants_df.drop(self.difficulty['difficulty_vars'], axis=1)
         #   aggregate element-wise sum for columns
-        print('\nDBG!!!!', self.scores_participants_df)
+        print('\nDBG!!!!\n', self.scores_participants_df)
         self.total_scores_participants_df = self.scores_participants_df.sum(axis=1)
         #   Add preferences of selected target
         #       If compromise or difficulty method is applied, the preferences for the selected target are weighted based on 
