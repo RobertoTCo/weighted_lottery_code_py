@@ -334,7 +334,7 @@ class Lottery():
         # If compromise selected, apply weights based on categories of targets
         print(f'DBG!!! Before compromise/difficulty:\n {self.scores_targets_df}')
         
-        if self.compromise is not None:
+        if len(self.compromise['compromise_vars']) == 0:
             # Start calculating compromise!
             self.process_compromise()
             # Get target columns not assigned as major or minor
@@ -354,7 +354,7 @@ class Lottery():
             print('DBG!!!!!!!!!!!!!!!!!!!!!!! temp_compromise_vars \n', self.temp_compromise_vars.to_numpy() )
             print(f'\n After compromise \n{self.scores_targets_df}')
         
-        if self.difficulty is not None:
+        if len(self.compromise['difficulty_vars']) == 0:
             # Start calculating difficulty!
             self.process_difficulty()
             if not self.difficulty['major_targets']:
