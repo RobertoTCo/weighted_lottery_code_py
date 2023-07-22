@@ -300,7 +300,7 @@ class Lottery():
         # compute zscores: values below the mean are negative, above the mean are positive
             # check sd != 0
         #print(self.temp_compromise_vars)
-        if np.std(self.temp_compromise_vars) == 0:
+        if np.std(self.temp_compromise_vars).all() == 0:
             self.temp_compromise_vars[:] = 0 # if all unique, preference not apply, sigmoid of 0 = 0.5
         else:
             self.temp_compromise_vars = self.zscores_series(self.temp_compromise_vars)
@@ -318,7 +318,7 @@ class Lottery():
         # compute zscores: values below the mean are negative, above the mean are positive
             # check sd != 0
         #print(self.temp_difficulty_vars)
-        if np.std(self.temp_difficulty_vars) == 0:
+        if np.std(self.temp_difficulty_vars).all() == 0:
             self.temp_difficulty_vars[:] = 0 # if all unique, preference not apply, sigmoid of 0 = 0.5
         else:
             self.temp_difficulty_vars = self.zscores_series(self.temp_difficulty_vars)
