@@ -4,7 +4,7 @@ import pandas as pd
 
 class Lottery():
 
-    __acceptable_keys_list = ['participants_df', 'targets_df', 'weights', 'method', 'verbose', 'strict', 'scaling', 'compromise','difficulty','deterministic','sleep_time','waiting']
+    __acceptable_keys_list = ['participants_df', 'targets_df', 'weights', 'method', 'verbose', 'strict', 'scaling', 'compromise','difficulty','deterministic','sleep_time','waiting','score_v']
 
     def __init__(self, **kwargs): #args receives unlimited no. of arguments as an array
 
@@ -22,6 +22,7 @@ class Lottery():
         self.sleep_time = None # No waiting time per iteration by default
         self.deterministic = None # Not deterministic by default
         self.waiting = False # Not asking for an input to do next interation
+        self.score_v = None
 
         # Expected input attributes
         [self.__setattr__(key, kwargs.get(key)) for key in self.__acceptable_keys_list]
@@ -101,6 +102,8 @@ class Lottery():
                 raise TypeError("The deterministic input must be a boolean True or False")
         if self.waiting is None:
             self.waiting = False
+        if self.score_v is None:
+            self.score_v = 4
         if self.compromise is not None:
             if not isinstance(self.compromise, dict):
                 raise TypeError("The compromise attribute must be a dictionary with the following keys: 'compromise_vars', 'major_targets', 'minor_targets'")
@@ -301,7 +304,7 @@ class Lottery():
             self.temp_compromise_vars[:] = 0 # if all unique, preference not apply, sigmoid of 0 = 0.5
         else:
             self.temp_compromise_vars = self.zscores_series(self.temp_compromise_vars)
-            self.temp_compromise_vars = self.temp_compromise_vars* 4 # make greater the std diff
+            self.temp_compromise_vars = self.temp_compromise_vars* self.score_v # make greater the std diff
         # compute sigmoide: negative values are less significance, positive values are more significance
         self.temp_compromise_vars = self.sigmoid(self.temp_compromise_vars)
         self.temp_compromise_vars = self.temp_compromise_vars * 2 # make mean -> 1, max -> 2
@@ -319,7 +322,7 @@ class Lottery():
             self.temp_difficulty_vars[:] = 0 # if all unique, preference not apply, sigmoid of 0 = 0.5
         else:
             self.temp_difficulty_vars = self.zscores_series(self.temp_difficulty_vars)
-            self.temp_difficulty_vars = self.temp_difficulty_vars* 4 # make greater the std diff
+            self.temp_difficulty_vars = self.temp_difficulty_vars* self.score_v # make greater the std diff
         # compute sigmoide: negative values are less significance, positive values are more significance
         self.temp_difficulty_vars = self.sigmoid(self.temp_difficulty_vars)
         self.temp_difficulty_vars = self.temp_difficulty_vars * 2 # make mean -> 1, max -> 2
